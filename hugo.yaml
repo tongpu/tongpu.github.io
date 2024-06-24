@@ -1,4 +1,5 @@
-baseURL: 'https://perfectlynormalgeek.com'
+#baseURL: 'https://blog.perfectlynormalgeek.com'
+baseURL: 'https://tongpu.github.io'
 languageCode: 'en-us'
 defaultContentLanguage: en
 copyright: © 2024 Lukas Grossar
