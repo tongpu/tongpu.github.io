@@ -1,6 +1,16 @@
 baseURL: 'https://perfectlynormalgeek.com'
 languageCode: 'en-us'
-title: 'Ramblings of a Perfectly Normal Geek'
+defaultContentLanguage: en
+copyright: © 2024 Lukas Grossar
+title: 'Ramblings of a perfectly normal geek'
+
+languages:
+  en:
+    languageCode: 'en-US'
+    languageName: English
+  de:
+    languageCode: 'de-CH'
+    languageName: Deutsch
 
 theme: 'hugo-flex'
 params:
