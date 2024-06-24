@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?><?xml-stylesheet type="text/xsl" href="https://blog.perfectlynormalgeek.com/xml/base.min.xml"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tags on Ramblings of a perfectly normal geek</title><link>https://blog.perfectlynormalgeek.com/tags/</link><description>Recent content in Tags on Ramblings of a perfectly normal geek</description><generator>Hugo -- gohugo.io</generator><language>en-US</language><copyright>© 2024 Lukas Grossar</copyright><lastBuildDate>Mon, 24 Jun 2024 09:17:06 +0200</lastBuildDate><atom:link rel="self" href="https://blog.perfectlynormalgeek.com/tags/index.xml" type="application/rss+xml"/><item><title>How to reinstall an operator on OpenShift</title><link>https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/</link><pubDate>Mon, 24 Jun 2024 09:17:06 +0200</pubDate><guid>https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/</guid><description>&lt;p>I recently ran into a problem where the install plan of an operator failed and I had to figure out how to reinstall an operator.
+It was definitely not as easy as I thought, so I decided to document how I managed to do it successfully.&lt;/p>
+&lt;h2 id="preparations">
+&lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/#preparations">Preparations&lt;/a>
+&lt;/h2>
+&lt;p>Before proceeding you must create a backup of the operator subscription in your target namespace, otherwise you might have a hard time being able to install the operator again.
+Additionally I would propose to also create a backup of the ClusterServiceVersion, which you tried to deploy.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>oc get subscription -n example my-operator-o yaml &amp;gt; subscription.yaml
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>oc get clusterserviceversion -n exmaple my-operator.v2.3.3 -o yaml &amp;gt; clusterserviceversion.yaml&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;h2 id="recreating-the-subscription">
+&lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/#recreating-the-subscription">Recreating the subscription&lt;/a>
+&lt;/h2>
+&lt;p>Before your able to recreate the subscription you should clean up the &lt;code>subscription.yaml&lt;/code> file by deleting the &lt;code>status&lt;/code> field.
+Now you can proceed to recreate the subscription by deleting the subscription, as well as the ClusterServiceVersion object and any install plans present.&lt;/p>
+&lt;p>!!! WARNING !!! This should usually not result in the removal of the operator and should not result in data loss, but I can&amp;rsquo;t guarantee this for every operator. You have been warned! !!! WARNING !!!&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>oc delete subscription -n example my-operator
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>oc delete clusterserviceversion -n example my-operator.v2.3.3
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>oc delete installplan -n example --all&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>Now we can proceed with recreating the subscription.
+If you previously had a specific version version of the operator installed your subscription backup will contain &lt;code>spec.installPlanApproval: Manual&lt;/code> and &lt;code>spec.startingCSV: my-operator.v2.3.3&lt;/code> and you might have to update the version for &lt;code>spec.startingCSV&lt;/code> to the one you&amp;rsquo;re trying to install.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>oc apply -f subscription.yaml&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>From now on there are two possible paths, depending on your configuration for &lt;code>installPlanApproval&lt;/code>.&lt;/p>
+&lt;h3 id="automatic-install-plan-approval">
+&lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/#automatic-install-plan-approval">Automatic install plan approval&lt;/a>
+&lt;/h3>
+&lt;p>After recreating the subscription it should be picked up by the olm-operator pod in the openshift-operator-lifecycle-manager namespace and a new ClusterServiceVersion object should be created and your operator should be updated to the most current version.
+If this is not the case have a look at &lt;a href="https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/#recreating_catalog_job">recreating the catalog job&lt;/a>.&lt;/p>
+&lt;h3 id="manual-install-plan-approval">
+&lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/#manual-install-plan-approval">Manual install plan approval&lt;/a>
+&lt;/h3>
+&lt;p>You should now see a new installplan in your operator namespace:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>oc get installplan -n example&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>open the installplan and configure &lt;code>spec.approved: true&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>oc edit installplan install-abcde&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>after that the ClusterServiceVersion you request should be created and your operator should be installed to the version you requested.
+If this is not the case have a look at &lt;a href="https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/#recreating_catalog_job">recreating the catalog job&lt;/a>.&lt;/p>
+&lt;h3 id="recreating-catalog-job">
+&lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/#recreating-catalog-job">Recreating catalog job&lt;/a>
+&lt;/h3>
+&lt;p>One issue I ran into during the last time I had to perform the above tasks was that for some reason the installplan and ClusterServiceVersion were not created.
+After a while debugging I found the error message &amp;ldquo;already existing job abcdef&amp;hellip;&amp;rdquo; in the output of the catalog-operator pod in the openshift-operator-lifecycle-manager, immeditally after I created the subscription.
+So all I&amp;rsquo;ve had to do was delete the job with the ID mentioned in the error message and recreate the subscription again to resolve this issue:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>oc delete job -n openshift-operator-lifecycle-manager abcedf...&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Using git filter-repo to clean up Git history</title><link>https://blog.perfectlynormalgeek.com/posts/git-filter-repo/</link><pubDate>Mon, 22 Jan 2024 10:34:29 +0100</pubDate><guid>https://blog.perfectlynormalgeek.com/posts/git-filter-repo/</guid><description>&lt;p>As I was preparing an open source release of a tool, which was previously only developed internally I was looking into how to remove internal files (e.g. pipeline configurations) from the repository and additionally I wanted to clean up the commit history, as the commit authors contained internal information (e.g. usernames).&lt;/p>
+&lt;p>After a bit of searching the interwebs I stumbled over &lt;a href="https://github.com/newren/git-filter-repo">&lt;code>git filter-repo&lt;/code>&lt;/a>, which seems to be the solution of choice for this task nowadays.&lt;/p>
+&lt;h2 id="git-filter-repo-usage">
+&lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/git-filter-repo/#git-filter-repo-usage">git filter-repo usage&lt;/a>
+&lt;/h2>
+&lt;p>First thing you need to be aware of is that by default &lt;code>git filter-repo&lt;/code> refuses to work on repositories which haven&amp;rsquo;t been freshly pulled.
+This is is a security mechanism, which is meant to protect you from shooting yourself in the foot.
+So the first step of the process is creating a fresh clone of your repository:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>git clone https://example.com/repo.git&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;h3 id="removing-files-from-git-history">
+&lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/git-filter-repo/#removing-files-from-git-history">Removing files from Git history&lt;/a>
+&lt;/h3>
+&lt;p>Compared to the complex combination of commands, which would be required to achieve the same result with &lt;code>git filter-branch&lt;/code>, this is a stupid simple task to achieve with &lt;code>git filter-repo&lt;/code>.
+Here&amp;rsquo;s an example how to remove a &lt;code>Jenkinsfile&lt;/code> from the repository:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>git filter-repo --invert-paths --path Jenkinsfile&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;p>The command also works the same if you want to remove whole repositories!&lt;/p>
+&lt;h3 id="cleaning-up-commit-authors">
+&lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/git-filter-repo/#cleaning-up-commit-authors">Cleaning up commit authors&lt;/a>
+&lt;/h3>
+&lt;p>Because of the way the Git client was set up for the developers and some contributions being done directly in Bitbucket, some commits contained the username as the e-mail address of the commit id.
+At first I thought I would have to write a script to loop over all commits and fix each authors, but luckily &lt;code>git filter-repo&lt;/code> had my back again!
+All I had to do was create a &lt;code>.mailmap&lt;/code> file, which contained the information how to map commit author e-mail adresses to commit author names and run &lt;code>git filter-repo --use-mailmap&lt;/code>.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># Will add John Doe as the commiter name for all commits made with the e-mail john.doe2@example.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>John Doe &amp;lt;john.doe2@example.com&amp;gt;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># Will add John Doe as the commiter name and john.doe2@example.com as the commit e-mail for all commits with the e-mail u123456@example.com&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>John Doe &amp;lt;john.doe2@example.com&amp;gt; &amp;lt;u123456@example.com&amp;gt;&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>
