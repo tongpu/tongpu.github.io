@@ -6,7 +6,7 @@ It was definitely not as easy as I thought, so I decided to document how I manag
 &lt;p>Before proceeding you must create a backup of the operator subscription in your target namespace, otherwise you might have a hard time being able to install the operator again.
 Additionally I would propose to also create a backup of the ClusterServiceVersion, which you tried to deploy.&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>oc get subscription -n example my-operator-o yaml &amp;gt; subscription.yaml
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>oc get clusterserviceversion -n exmaple my-operator.v2.3.3 -o yaml &amp;gt; clusterserviceversion.yaml&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>oc get clusterserviceversion -n example my-operator.v2.3.3 -o yaml &amp;gt; clusterserviceversion.yaml&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
 &lt;h2 id="recreating-the-subscription">
 &lt;a class="Heading-link u-clickable" href="https://blog.perfectlynormalgeek.com/posts/openshift-reinstall-operator/#recreating-the-subscription">Recreating the subscription&lt;/a>
 &lt;/h2>
