@@ -14,7 +14,7 @@ Additionally I would propose to also create a backup of the ClusterServiceVersio
 
 ```shell
 oc get subscription -n example my-operator-o yaml > subscription.yaml
-oc get clusterserviceversion -n exmaple my-operator.v2.3.3 -o yaml > clusterserviceversion.yaml
+oc get clusterserviceversion -n example my-operator.v2.3.3 -o yaml > clusterserviceversion.yaml
 ```
 
 ## Recreating the subscription
