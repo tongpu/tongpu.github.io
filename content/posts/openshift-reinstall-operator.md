@@ -64,7 +64,7 @@ If this is not the case have a look at [recreating the catalog job](#recreating_
 ### Recreating catalog job
 
 One issue I ran into during the last time I had to perform the above tasks was that for some reason the installplan and ClusterServiceVersion were not created.
-After a while debugging I found the error message "already existing job abcdef..." in the output of the catalog-operator pod in the openshift-operator-lifecycle-manager, immeditally after I created the subscription.
+After a while debugging I found the error message "already existing job abcdef..." in the output of the catalog-operator pod in the openshift-operator-lifecycle-manager namespace, immediately after I created the subscription.
 So all I've had to do was delete the job with the ID mentioned in the error message and recreate the subscription again to resolve this issue:
 
 ```shell
